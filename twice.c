@@ -19,11 +19,11 @@ float rand_float(void)
 }
 
 // loss function
-float loss(float w){
+float loss(float w, float b){
 	float result = 0.0f;
 	for (size_t i = 0; i < train_count; ++i) {
 		float x = train[i][0];
-		float y = x*w;
+		float y = x*w+b;
 		float dist = y - train[i][1];
 		result += dist*dist; // mse
 	}
@@ -33,17 +33,24 @@ float loss(float w){
 
 int main()
 {
-	// srand(time(0)); // initialize random numbers
-	srand(69);
+	srand(time(0)); // initialize random numbers
 	float w = rand_float()*10.0f;
+	float b = rand_float()*2.0f;
 	float eps = 1e-3;
-	float l_rate = 1e-3 ;
+	float l_rate = 1e-3;
 	
 	// finite difference, not derivative
-	printf("%f\n", loss(w));
-	float derivative = (loss(w + eps) - loss(w))/eps;
-	w -= l_rate*derivative;
-	printf("%f\n", loss(w));
-
+	printf("%f\n", loss(w, b));
+	for(size_t i = 0; i < 600; ++i)
+	{
+		float l = loss(w, b);
+		float dw = (loss(w + eps, b) - l)/eps;
+		float db = (loss(w, b + eps) - l)/eps;
+		w -= l_rate*dw;
+		b -= l_rate*db;
+		printf("loss: %f\n", loss(w, b));
+	}
+	printf("neuron prediction: %f, bias: %f\n", w, b);
+	printf("real value: %f\n", train[1][2]);
 	return 0;
 }
