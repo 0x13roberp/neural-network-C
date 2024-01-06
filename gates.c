@@ -8,12 +8,12 @@ float sigmoidf(float x){
     return 1.f / (1.f + expf(-x)); // expf works with floats
 }
 
-// OR gate
+// NAND gate
 float train[][3] = {
-    {0, 0, 0},
+    {0, 0, 1},
     {0, 1, 1},
     {1, 0, 1},
-    {1, 1, 1},
+    {1, 1, 0},
 };
 #define train_count (sizeof(train)/sizeof(train[0]))
 
@@ -37,13 +37,13 @@ float rand_float(void)
 
 int main(void) {
     srand(time(0));
-    float eps = 1e-2;
-    float l_rate = 1e-2;
+    float eps = 1e-1;
+    float l_rate = 1e-1;
     float b = rand_float();
     float w1 = rand_float();
     float w2 = rand_float();
     
-    for(size_t i = 0; i < 100000; ++i)
+    for(size_t i = 0; i < 50000; ++i)
     {
         float l = loss(w1, w2, b);
         float dw1 = (loss(w1 + eps, w2, b) - l)/eps;
@@ -53,7 +53,13 @@ int main(void) {
         w2 -= l_rate*dw2;
         b -= l_rate*db;
 
-        printf("w1: %f, w2: %f, b: %f, loss: %f\n", w1, w2, b, l);
+        //printf("w1: %f, w2: %f, b: %f, loss: %f\n", w1, w2, b, l);
+    }
+
+    for(size_t i = 0; i < 2; ++i){
+        for(size_t j = 0; j < 2; ++j){
+            printf("%zu | %zu = %f\n", i, j, sigmoidf(i*w1 + j*w2 + b));
+        }
     }
     return 0;
 }
