@@ -1,1 +1,1 @@
-building neural nets in c
+building neural nets in c. following tsoding videos
