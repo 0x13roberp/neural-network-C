@@ -29,20 +29,21 @@ typedef struct {
 // the variables must be in () just because of expressions like i+1.
 #define MATRIX_AT(m, i, j) (m).es[(i)*(m).cols + (j)]
 
-float rand_float(void);
-
 // dynamic memory.
 Matrix mat_alloc(size_t rows, size_t cols);
 void matrix_rand(Matrix m, float low, float high);
 void matrix_dot(Matrix dst, Matrix a, Matrix b);
 void matrix_sum(Matrix dst, Matrix a);
-void matrix_print(Matrix m);
+void matrix_print(Matrix m, const char *id);
+void matrix_fill(Matrix m, float z);
 
 #endif // GRADITO_H_
 
 // C part.
 
 #ifdef GRADITO_IMPLEMENTATION
+
+// return a random number from 0 to 1.
 float rand_float(void){
     return (float) rand() / (float) RAND_MAX;
 }
@@ -58,36 +59,63 @@ Matrix mat_alloc(size_t rows, size_t cols){
 
 // defining dotproduct matrix operation.
 // output matrix first just for convention.
+// if we have matrix A(4x2) and matrix B(2x5). then matrix DST(4x5).
 void matrix_dot(Matrix dst, Matrix a, Matrix b){
-    (void) dst;
-    (void) a;
-    (void) b;
-}
+  NN_ASSERT(a.cols == b.rows); // to do matrix multiplication, the columns of the first matrix needs to have the same dimention that the rows of the second matrix.
+  NN_ASSERT(dst.rows == a.rows);
+  NN_ASSERT(dst.cols == b.cols);
 
-// defining sum matrix operation
-void matrix_sum(Matrix dst, Matrix a){
-    (void) dst;
-    (void) a;
-}
+  size_t n = a.cols; // interstice.
 
-// printing the matrix on screen
-void matrix_print(Matrix m){
-    for(size_t i = 0; i < m.rows; ++i){
-        for(size_t j = 0; j < m.cols; ++j){
-            printf("%f ", MATRIX_AT(m, i, j)); // with the macro we avoid later issues.
-        }
-        printf("\n");
+  for(size_t i = 0; i < dst.rows; ++i){
+    for(size_t j = 0; j < dst.cols; ++j){
+      MATRIX_AT(dst, i, j) = 0;
+      for(size_t k = 0; k < n; ++k){
+        MATRIX_AT(dst, i, j) += MATRIX_AT(a, i, k) * MATRIX_AT(b, k, j); // i and j are used to go through the rows and cols. but k its the variable that is used to do the operation. 
+      }
     }
-    (void) m;
+  }
+}
+
+// defining sum matrix operation.
+void matrix_sum(Matrix dst, Matrix a){
+  NN_ASSERT(dst.rows == a.rows); // to add two matrices, they need to have the same # of rows and cols.
+  NN_ASSERT(dst.cols == a.cols);
+
+  for(size_t i = 0; i < dst.rows; ++i){
+    for(size_t j = 0; j < dst.cols; ++j){
+      MATRIX_AT(dst, i, j) += MATRIX_AT(a, i, j);
+    }
+  }
+}
+
+// printing the matrix on screen. id is the name of the matrix.
+void matrix_print(Matrix m, const char *id){
+  printf("%s = [\n", id);
+  for(size_t i = 0; i < m.rows; ++i){
+    for(size_t j = 0; j < m.cols; ++j){
+      printf("   %f ", MATRIX_AT(m, i, j)); // with the macro we avoid later issues.
+      }
+      printf("\n");
+  }
+  printf("]\n");
 }
 
 // randomize the values.
 void matrix_rand(Matrix m, float low, float high){
-    for(size_t i = 0; i < m.rows; ++i){
-        for(size_t j = 0; j < m.cols; ++j){
-            MATRIX_AT(m, i, j) = rand_float()*(high - low) + low;
-        }
-        printf("\n");
-    }
+  for(size_t i = 0; i < m.rows; ++i){
+    for(size_t j = 0; j < m.cols; ++j){
+      MATRIX_AT(m, i, j) = rand_float()*(high - low) + low;
+      }
+    printf("\n");
+  }
+}
+
+void matrix_fill(Matrix m, float z){
+  for(size_t i = 0; i < m.rows; ++i){
+    for (size_t j = 0; j < m.cols; ++j) {
+      MATRIX_AT(m, i, j) = z;
+      }
+  }
 }
 #endif //GRADITO_IMPLEMENTATION
