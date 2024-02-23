@@ -5,6 +5,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <math.h> // sigmoidf
 
 #ifndef NN_MALLOC
 #include <stdlib.h>
@@ -16,32 +17,45 @@
 #define NN_ASSERT assert
 #endif // NN_ASSERT
 
+float rand_float(void);
+float sigmoidf(float x);
+
 // defining matrix struct.
 // very light structure. just contains 3 values of 64 bits, the structure itself doesnt contain the data.
 typedef struct {
     size_t rows; // size_t is 64  bits.
     size_t cols;
     float *es; // pointer to the beginning of the data.
+    size_t stride; // width
 } Matrix;
 
 // SAFEKEEPER MACRO OF PRINTING THE MATRIX.
 // when we printing the matrix we have to take the row and we have to skip i rows. and the size of the rows is amount of columns.
 // the variables must be in () just because of expressions like i+1.
-#define MATRIX_AT(m, i, j) (m).es[(i)*(m).cols + (j)]
+#define MATRIX_AT(m, i, j) (m).es[(i)*(m).stride + (j)]
 
 // dynamic memory.
 Matrix mat_alloc(size_t rows, size_t cols);
+
 void matrix_rand(Matrix m, float low, float high);
 void matrix_dot(Matrix dst, Matrix a, Matrix b);
 void matrix_sum(Matrix dst, Matrix a);
 void matrix_print(Matrix m, const char *id);
 void matrix_fill(Matrix m, float z);
+void matrix_sigmoid(Matrix m);
+Matrix matrix_row(Matrix m, size_t row);
+void matrix_copy(Matrix dst, Matrix src);
 
 #endif // GRADITO_H_
 
 // C part.
 
 #ifdef GRADITO_IMPLEMENTATION
+
+// sigmoid activation function.
+float sigmoidf(float x){
+  return 1.f / (1.f + expf(-x));
+}
 
 // return a random number from 0 to 1.
 float rand_float(void){
@@ -52,6 +66,7 @@ Matrix mat_alloc(size_t rows, size_t cols){
     Matrix m;
     m.rows = rows;
     m.cols = cols;
+    m.stride = cols;
     m.es = NN_MALLOC(sizeof(*m.es)*rows*cols); // allocate memory. *m.es in case that we want to change de datatype to other one.
     NN_ASSERT(m.es != NULL); // check if pointer is null.
     return m;
@@ -111,11 +126,43 @@ void matrix_rand(Matrix m, float low, float high){
   }
 }
 
+// fill the matrix with a specific number.
 void matrix_fill(Matrix m, float z){
   for(size_t i = 0; i < m.rows; ++i){
     for (size_t j = 0; j < m.cols; ++j) {
       MATRIX_AT(m, i, j) = z;
       }
+  }
+}
+
+// applying sigmoid to the matrix.
+void matrix_sigmoid(Matrix m){
+  for(size_t i = 0; i < m.rows; ++i){
+    for(size_t j = 0; j < m.cols; ++j){
+      MATRIX_AT(m, i, j) = sigmoidf(MATRIX_AT(m, i, j));
+    }
+  }
+}
+
+// taking a submatrix of the row.
+Matrix matrix_row(Matrix m, size_t row){
+  return (Matrix){
+    .rows = 1,
+    .cols = m.cols,
+    .stride = m.stride,
+    .es = &MATRIX_AT(m, row, 0), // pointer to the beggining of the row.
+  };
+}
+
+// copying the actual matrix.
+void matrix_copy(Matrix dst, Matrix src){
+  NN_ASSERT(dst.rows == src.rows); // make sure that the shape of the matrices are equal.
+  NN_ASSERT(dst.cols == src.cols);
+
+  for(size_t i = 0; i < dst.rows; ++i){
+    for(size_t j = 0; j < dst.cols; ++j){
+      MATRIX_AT(dst, i, j) = MATRIX_AT(src, i, j);
+    }
   }
 }
 #endif //GRADITO_IMPLEMENTATION
